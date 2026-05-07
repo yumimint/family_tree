@@ -1,0 +1,12 @@
+[project]
+name = "family-tree"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "graphviz>=0.21",
+    "pyperclip>=1.11.0",
+]
+[project.scripts]
+famtree = "family_tree.cli:main"
