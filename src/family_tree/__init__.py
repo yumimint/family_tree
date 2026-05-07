@@ -13,10 +13,10 @@ class Node:
 class Person(Node):
     def __init__(self, desc: str):
         adopted, fullname = self.inner_outer(desc, "{}")
-        famname, name = self.inner_outer(fullname, "[]")
+        surname, name = self.inner_outer(fullname, "[]")
         self.adopted = adopted
         self.fullname = fullname
-        self.famname = famname
+        self.surname = surname
         self.name = name
         self.house: Optional[Household] = None
         self.prefix = ""
@@ -28,10 +28,10 @@ class Person(Node):
 
     @classmethod
     def new_child(cls, parent: Self, name: str) -> Self:
-        famname = parent.famname
+        surname = parent.surname
         if parent.family_name_first:
-            return cls(f"[{famname}]{name}")
-        return cls(f"{name}[{famname}]")
+            return cls(f"[{surname}]{name}")
+        return cls(f"{name}[{surname}]")
 
     @staticmethod
     def inner_outer(s: str, brackets: str):
@@ -66,7 +66,7 @@ class Household(Node):
     @property
     def name(self) -> str:
         # 最初の親の姓を家のnameとする
-        return self.parents[0].famname
+        return self.parents[0].surname
 
     def add_parnt(self, fullname: str):
         self.parents.append(Person(fullname))
@@ -91,13 +91,13 @@ class Household(Node):
                 # 配偶者又は始祖
                 p.home = self
                 # 姓・旧姓を併記する
-                if p.famname:
+                if p.surname:
                     # 配偶者は()で囲う
-                    famname = f"({p.famname})" if i > 0 else p.famname
+                    surname = f"({p.surname})" if i > 0 else p.surname
                     if p.family_name_first:
-                        p.prefix = famname
+                        p.prefix = surname
                     else:
-                        p.suffix = famname
+                        p.suffix = surname
 
         # 生まれ順で子供に番号を振る
         if len(self.childlens) > 1:
@@ -118,25 +118,31 @@ class Family:
         for line in lines:
             # 要確認マーカー ? を除去
             line = line.replace("?", "")
-            if len(line) < 1:
-                # 空行なら現在の家をaddして新しい家を準備
-                if h.parents:
-                    self.add_household(h)
-                    h = Household()
-                continue
+            try:
+                if len(line) < 1:
+                    # 空行なら現在の家をaddして新しい家を準備
+                    if h.parents:
+                        self.add_household(h)
+                        h = Household()
+                    continue
 
-            # print(line)
-            a, b = (line + "\t").split("\t")[:2]
-            if a and b:
-                raise ValueError(f"'{line}' : Invalid row")
-            elif a and not b:
-                if h.childlens:
-                    # 現在の家をaddして新しい家を準備
-                    self.add_household(h)
-                    h = Household()
-                h.add_parnt(a)
-            else:
-                h.new_child(b)
+                # print(line)
+                a, b = (line + "\t").split("\t")[:2]
+                if a and b:
+                    raise ValueError("Invalid row")
+                elif a and not b:
+                    if h.childlens:
+                        # 現在の家をaddして新しい家を準備
+                        self.add_household(h)
+                        h = Household()
+                    h.add_parnt(a)
+                else:
+                    h.new_child(b)
+            except Exception as e:
+                if line:
+                    raise type(e)(f"{e} : {line}")
+                else:
+                    raise e
 
         if h.parents:
             self.add_household(h)
