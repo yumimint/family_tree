@@ -23,13 +23,13 @@ class Person(Node):
         self.suffix = ""
 
     @property
-    def family_name_first(self) -> bool:
+    def surname_first(self) -> bool:
         return self.fullname[0] == "["
 
     @classmethod
     def new_child(cls, parent: Self, name: str) -> Self:
         surname = parent.surname
-        if parent.family_name_first:
+        if parent.surname_first:
             return cls(f"[{surname}]{name}")
         return cls(f"{name}[{surname}]")
 
@@ -39,7 +39,9 @@ class Person(Node):
         if open in s and close in s:
             a = s.index(open) + 1
             b = s.rindex(close)
-            return s[a:b], s[: a - 1] + s[b + 1:]
+            inner = s[a:b].strip()
+            outer = s[: a - 1].lstrip() + s[b + 1:].rstrip()
+            return inner, outer
         return "", s
 
     def __repr__(self):
@@ -50,7 +52,7 @@ class Person(Node):
         mei = self.name
         # 名前の*より後を除去 (同姓同名の区別用)
         if "*" in mei:
-            mei, _ = mei.split("*")
+            mei = mei[:mei.index("*")]
         return " ".join([self.prefix, mei, self.suffix]).strip()
 
 
@@ -94,7 +96,7 @@ class Household(Node):
                 if p.surname:
                     # 配偶者は()で囲う
                     surname = f"({p.surname})" if i > 0 else p.surname
-                    if p.family_name_first:
+                    if p.surname_first:
                         p.prefix = surname
                     else:
                         p.suffix = surname
